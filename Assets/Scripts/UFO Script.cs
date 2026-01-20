@@ -4,7 +4,10 @@ using UnityEngine.InputSystem;
 
 public class UFOScript : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 4.0f;
+    [SerializeField] private float smoothTime = 2.0f;
+    private Vector3 targetVelocity;
+    private Vector3 velocity = Vector3.zero;
     private Vector2 _input;
 
     public GameObject beam;
@@ -38,9 +41,6 @@ public class UFOScript : MonoBehaviour
 
     private void Update()
     {
-        //ufo movement
-        Vector3 movement = new Vector3(_input.x, 0f, _input.y);
-        transform.position += movement * moveSpeed * Time.deltaTime;
         
         //tractor beam raycast
         if (beamOn)
@@ -58,5 +58,10 @@ public class UFOScript : MonoBehaviour
             // Optional: visualize the ray
             Debug.DrawRay(transform.position, Vector3.down * beamRange, Color.green);
         }
+        
+        //movement
+        Vector3 movement = (new Vector3(_input.x, 0f, _input.y))*moveSpeed;
+        transform.position = Vector3.SmoothDamp(transform.position, transform.position + movement, ref velocity, smoothTime);
+
     }
 }
