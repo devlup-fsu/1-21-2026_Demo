@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,23 +8,23 @@ public class UFOScript : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 4.0f;
     [SerializeField] private float smoothTime = 2.0f;
-    [SerializeField] private float beamDist = 1.75f;
-    private Vector3 targetVelocity;
     private Vector3 velocity = Vector3.zero;
     private Vector2 _input;
     public GameObject beam;
     private bool beamOn;
-    private List<Rigidbody> cows = new List<Rigidbody>();
+    
     //raycast variables
     private float beamRange = 10f;
     private string targetTag = "cow";
     
-    //input function
+    private GameObject cow;
+    
+    //input movement function
     public void GetMovement(InputAction.CallbackContext context)
     {
         _input = context.ReadValue<Vector2>();
     }
-
+    //input 
     public void TractorBeam(InputAction.CallbackContext context)
     {
         if (context.started)
@@ -42,34 +43,30 @@ public class UFOScript : MonoBehaviour
 
     private void Update()
     {
-        //give gravity back to cows outside the beam
-        for (int i=cows.Count-1; i>=0; i--)
-        {
-            Rigidbody cow = cows[i];
-            if (Vector3.Distance(transform.position, cow.transform.position)>beamDist||!beamOn)
-            {
-                cow.useGravity = true;
-                cows.RemoveAt(i);
-            }
-        }
         if (beamOn)
         {
-            //anti-gravity for cows inside the beam
-            foreach (var cow in cows) cow.useGravity = false;
             //tractor beam raycast
             RaycastHit hit;
             if (Physics.Raycast(transform.position, Vector3.down, out hit, beamRange))
             {
                 if (hit.collider.CompareTag(targetTag))
                 {
-                    //Debug.Log("Tractor beam hit: " + hit.collider.name);
-                    hit.collider.GetComponent<LerpCow>().PullTowardUFO();
-                    cows.Add(hit.collider.GetComponent<Rigidbody>());
+                    //print("Tractor beam hit: " + hit.collider.name);
+                    cow = hit.collider.GameObject();
+                    cow.GetComponent<Rigidbody>().useGravity = false;
+                    cow.GetComponent<LerpCow>().PullTowardUFO();
                 }
             }
 
-            // Optional: visualize the ray
+            //visualize the ray in the scene view
             Debug.DrawRay(transform.position, Vector3.down * beamRange, Color.green);
+        }
+        else if(cow != null)
+        {
+            if (cow.GetComponent<Rigidbody>() != null)
+            {
+                cow.GetComponent<Rigidbody>().useGravity = true;
+            }
         }
 
         //movement
